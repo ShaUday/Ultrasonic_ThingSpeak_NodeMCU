@@ -1,5 +1,5 @@
-Ultrasonic Sensor with NodeMCU and ThingSpeak
-This project demonstrates real-time distance measurement using an HC-SR04 ultrasonic sensor connected to a NodeMCU ESP8266, with data sent to ThingSpeak for visualization. It showcases skills in IoT, embedded systems, and cloud integration.
+Smart Jar Cap with Ultrasonic Sensor and Custom Website
+This IoT project creates a smart jar cap with an HC-SR04 ultrasonic sensor to measure the fill level of a jar, sending data to ThingSpeak and displaying it on a custom website. The NodeMCU ESP8266 uses WiFiManager for user-friendly Wi-Fi setup, and the website fetches data automatically, eliminating the need for users to input ThingSpeak API keys. This showcases skills in IoT, embedded systems, web development, and user-focused design.
 Table of Contents
 
 Overview
@@ -7,23 +7,26 @@ Hardware Requirements
 Wiring
 Software Setup
 ThingSpeak Configuration
+Wi-Fi Configuration
+Website Setup
 Code Explanation
 Usage
 Troubleshooting
 Future Improvements
 
 Overview
-The HC-SR04 measures distance by sending ultrasonic pulses and calculating the time for the echo to return. The NodeMCU ESP8266 processes this data and sends it to ThingSpeak, a cloud platform for IoT data visualization, via Wi-Fi. The project includes Arduino code and setup instructions to replicate the system.
+The HC-SR04, mounted in a jar cap, measures the distance to the jar’s contents, calculating the fill level (0% = empty, 100% = full). The NodeMCU sends data to ThingSpeak via Wi-Fi, configured through WiFiManager’s web portal. A custom website fetches and displays this data without requiring users to input ThingSpeak API keys, enhancing usability.
 Hardware Requirements
 
 NodeMCU ESP8266 (v1.0 or ESP-12E)
 HC-SR04 Ultrasonic Sensor
+Jar with cap (large enough for sensor)
 Jumper wires
-Breadboard (optional)
-Micro-USB cable
+Breadboard or PCB (optional)
+Micro-USB cable or 3.7V Li-ion battery with TP4056 module
 
 Wiring
-Connect the HC-SR04 to the NodeMCU as follows:
+Connect the HC-SR04 to the NodeMCU:
 
 
 
@@ -53,58 +56,41 @@ GND
 Common ground
 
 
-Note: If using 5V for VCC, add a voltage divider (e.g., 1kΩ and 2kΩ resistors) for the Echo pin to protect NodeMCU’s 3.3V GPIO.
+Note: If using 5V for VCC, add a voltage divider (1kΩ and 2kΩ resistors) for Echo.
 Software Setup
 
 Install Arduino IDE and configure for ESP8266 (assumed complete).
-Install the ThingSpeak library:
-Go to Sketch > Include Library > Manage Libraries.
-Search for “ThingSpeak” by MathWorks and install.
+Install libraries:
+ThingSpeak: Sketch > Include Library > Manage Libraries > Search "ThingSpeak".
+WiFiManager: Search “WiFiManager” by tzapu.
 
 
-Use the code in ultrasonic_thingSpeak.ino.
+Use SmartJarCap.ino for the NodeMCU.
+For the website, use index.html (frontend-only) or server.js with public/index.html (backend).
 
 ThingSpeak Configuration
 
 Sign up at thingspeak.com.
-Create a new channel:
-Name: Ultrasonic Sensor Data
+Create a channel:
+Name: Smart Jar Fill Level
 Field 1: Distance (cm)
+Field 2: Fill Level (%)
 Save the channel.
 
 
-Note the Channel ID and Write API Key from the API Keys tab.
-Update the code with your Wi-Fi credentials, Channel ID, and Write API Key.
+Note the Channel ID, Write API Key, and Read API Key from the API Keys tab.
+Update SmartJarCap.ino with Channel ID and Write API Key.
+Use Read API Key in the website code (frontend or backend).
 
-Code Explanation
+Wi-Fi Configuration
 
-Libraries: ESP8266WiFi.h for Wi-Fi connectivity, ThingSpeak.h for cloud communication.
-HC-SR04 Logic: Sends a 10µs pulse via Trig, measures Echo duration, and calculates distance.
-ThingSpeak: Sends distance data to Field 1 every 20 seconds (per free account limits).
-Serial Monitor: Displays distance and upload status for debugging.
+On first boot, connect to the “SmartJarCap” access point (password: “jar12345”).
+Open the captive portal (192.168.4.1), select your Wi-Fi, and enter credentials.
+The NodeMCU saves credentials and auto-connects on future boots.
 
-Usage
+Website Setup
 
-Wire the HC-SR04 to the NodeMCU as described.
-Update ultrasonic_thingSpeak.ino with your Wi-Fi and ThingSpeak details.
-Upload the code via Arduino IDE (NodeMCU 1.0, 115200 baud).
-Open Serial Monitor to verify Wi-Fi and data sending.
-View real-time data on ThingSpeak under your channel’s Private View.
+Frontend-Only (Simple):
+Use index.html to fetch data directly from ThingSpeak’s API.
+Host on GitHub Pages or Netlify.
 
-Troubleshooting
-
-No ThingSpeak Data: Check Channel ID, Write API Key, and Wi-Fi credentials. Ensure delay(20000) for free account limits.
-Erratic Readings: Verify wiring, use a voltage divider for 5V VCC, ensure objects are within 2–400 cm.
-Upload Issues: Confirm board/port settings, press NodeMCU’s “Boot” button if needed.
-
-Future Improvements
-
-Add multiple sensors (e.g., temperature) to other ThingSpeak fields.
-Implement data filtering for smoother readings.
-Add a local OLED display for real-time visualization.
-Log data to a local server for redundancy.
-
-License
-MIT License - feel free to use and modify this code.
-
-Built by [Your Name] to demonstrate IoT and embedded programming skills.
