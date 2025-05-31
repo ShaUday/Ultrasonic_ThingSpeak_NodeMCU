@@ -1,18 +1,19 @@
 #include <ESP8266WiFi.h>
+#include <WiFiManager.h> // For Wi-Fi configuration
 #include <ThingSpeak.h>
 
 // HC-SR04 Pins
 #define TRIG_PIN D1 // GPIO 5
 #define ECHO_PIN D2 // GPIO 4
 
-// Wi-Fi Credentials
-const char* ssid = "YOUR_WIFI_SSID"; // Replace with your Wi-Fi name
-const char* password = "YOUR_WIFI_PASSWORD"; // Replace with your Wi-Fi password
-
 // ThingSpeak Settings
-unsigned long channelID = YOUR_CHANNEL_ID; // Replace with your Channel ID (e.g., 1234567)
-const char* writeAPIKey = "YOUR_WRITE_API_KEY"; // Replace with your Write API Key
+unsigned long channelID = 2975866; // Replace with your Channel ID
+const char* writeAPIKey = "X4PCBMTAM63PDM6B"; // Replace with your Write API Key
 WiFiClient client;
+
+// Jar dimensions (adjust as needed)
+const float jarHeight = 20.0; // Jar height in cm (from cap to bottom)
+const float sensorOffset = 2.0; // Distance from sensor to cap edge in cm
 
 void setup() {
   // Initialize Serial Monitor
@@ -22,15 +23,18 @@ void setup() {
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   
-  // Connect to Wi-Fi
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  // Initialize WiFiManager
+  WiFiManager wifiManager;
+  // Uncomment to reset saved Wi-Fi settings for testing
+  // wifiManager.resetSettings();
+  
+  // Start Wi-Fi configuration portal if not connected
+  if (!wifiManager.autoConnect("SmartJarCap")) {
+    Serial.println("Failed to connect to Wi-Fi");
+    delay(3000);
+    ESP.restart();
   }
-  Serial.println("\nWiFi connected");
+  Serial.println("WiFi connected");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
   
@@ -48,13 +52,22 @@ void loop() {
   long duration = pulseIn(ECHO_PIN, HIGH);
   float distance = duration * 0.0343 / 2;
   
+  // Calculate fill level (0% = empty, 100% = full)
+  float maxDistance = jarHeight - sensorOffset; // Max measurable distance
+  float fillLevel = (1 - (distance - sensorOffset) / maxDistance) * 100;
+  if (fillLevel < 0) fillLevel = 0; // Clamp to 0% if negative
+  if (fillLevel > 100) fillLevel = 100; // Clamp to 100% if over
+  
   // Print to Serial Monitor
   Serial.print("Distance: ");
   Serial.print(distance);
-  Serial.println(" cm");
+  Serial.print(" cm, Fill Level: ");
+  Serial.print(fillLevel);
+  Serial.println(" %");
   
-  // Send data to ThingSpeak (Field 1)
+  // Send data to ThingSpeak
   ThingSpeak.setField(1, distance);
+  ThingSpeak.setField(2, fillLevel);
   int response = ThingSpeak.writeFields(channelID, writeAPIKey);
   
   // Check if data was sent successfully
